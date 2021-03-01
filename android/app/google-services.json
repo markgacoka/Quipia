@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "331735580327",
+    "project_id": "quipia",
+    "storage_bucket": "quipia.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:331735580327:android:cb63ca898263485985e582",
+        "android_client_info": {
+          "package_name": "com.example.Quipia"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "331735580327-er0f15330js33t0120v10afqomgo42v0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwkbR_kvXMe16P3tOay2Uo4NvjsQNjyVM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "331735580327-er0f15330js33t0120v10afqomgo42v0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:331735580327:android:87f7fccc6791bac785e582",
+        "android_client_info": {
+          "package_name": "com.example.quipia"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "331735580327-er0f15330js33t0120v10afqomgo42v0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwkbR_kvXMe16P3tOay2Uo4NvjsQNjyVM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "331735580327-er0f15330js33t0120v10afqomgo42v0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
