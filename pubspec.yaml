@@ -10,7 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.0
+  cupertino_icons:
   flutter_svg:
   fl_chart:
   google_fonts:
@@ -32,7 +32,19 @@ dependencies:
   like_button:
   firebase_admob: 
   firebase_core: 
+  firebase_auth:
   flutter_native_admob: 
+  cloud_firestore:
+  google_sign_in:
+  flutter_facebook_auth:
+  flutter_webview_plugin:
+  audioplayers:
+  wiredash:
+  provider:
+  alert_dialogs:
+    git:
+      url: https://github.com/bizz84/codewithandrea_flutter_packages
+      path: packages/alert_dialogs
 
 dev_dependencies:
   flutter_test:
@@ -42,7 +54,9 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/images/thumbnails/
     - assets/fonts/
+    - assets/audio/
 
   # fonts:
   #   - family: Schyler

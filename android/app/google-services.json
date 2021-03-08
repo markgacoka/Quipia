@@ -1,62 +1,33 @@
 {
   "project_info": {
-    "project_number": "331735580327",
-    "project_id": "quipia",
-    "storage_bucket": "quipia.appspot.com"
+    "project_number": "811352036923",
+    "project_id": "quipia-4bd97",
+    "storage_bucket": "quipia-4bd97.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:331735580327:android:cb63ca898263485985e582",
+        "mobilesdk_app_id": "1:811352036923:android:9b183f9fc58e068b4aae1e",
         "android_client_info": {
           "package_name": "com.example.Quipia"
         }
       },
       "oauth_client": [
         {
-          "client_id": "331735580327-er0f15330js33t0120v10afqomgo42v0.apps.googleusercontent.com",
+          "client_id": "811352036923-8tohtqb8nc4ifv764frq21bilga2qruo.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBwkbR_kvXMe16P3tOay2Uo4NvjsQNjyVM"
+          "current_key": "AIzaSyAlxa41QRUjyYvgT0cCG_mHfZgvDaNgK0A"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "331735580327-er0f15330js33t0120v10afqomgo42v0.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:331735580327:android:87f7fccc6791bac785e582",
-        "android_client_info": {
-          "package_name": "com.example.quipia"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "331735580327-er0f15330js33t0120v10afqomgo42v0.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBwkbR_kvXMe16P3tOay2Uo4NvjsQNjyVM"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "331735580327-er0f15330js33t0120v10afqomgo42v0.apps.googleusercontent.com",
+              "client_id": "811352036923-8tohtqb8nc4ifv764frq21bilga2qruo.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

@@ -1,108 +1,229 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-class LineCharts extends StatelessWidget {
-  final maxValue = 10;
+class LineChartPage extends StatefulWidget {
+  @override
+  _LineChartPageState createState() => _LineChartPageState();
+}
+
+class _LineChartPageState extends State<LineChartPage> {
+  int _percentileInt, userPoints, rank, index, percentile;
+  List _pointsArr;
+
+  List<Color> gradientColors = [
+    const Color(0xff23b6e6),
+    const Color(0xff02d39a),
+  ];
+
+  final List<double> oneten = [
+    0.000,
+    2.060,
+    4.430,
+    6.720,
+    8.390,
+    9.010,
+    8.391,
+    6.721,
+    4.431,
+    2.061,
+    0.001
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _getPercentileInt();
+  }
+
+  _getPercentileInt() async {
+    _percentileInt = await _getPercentile();
+    setState(() {
+      _percentileInt = _percentileInt;
+    });
+  }
+
+  Future<int> _getPercentile() async {
+    _pointsArr = await _getPoints();
+    List<int> dataListAsInt =
+        _pointsArr.map((data) => int.parse(data)).toList();
+    userPoints = int.parse(await _getPointsDB());
+    rank = dataListAsInt.indexOf(userPoints) + 1;
+    index = 100 ~/ dataListAsInt.length;
+    percentile = (index * rank).toInt();
+    return percentile ~/ 10;
+  }
+
+  Future<List> _getPoints() async {
+    var documents = await FirebaseFirestore.instance
+        .collection('points')
+        .orderBy("points", descending: false)
+        .get();
+    return documents.docs.map((e) => e.data()['points']).toList();
+  }
+
+  Future<String> _getPointsDB() async {
+    String currPoints;
+    final String userUID = FirebaseAuth.instance.currentUser.uid;
+    await FirebaseFirestore.instance
+        .collection('points')
+        .where(FieldPath.documentId, isEqualTo: userUID)
+        .get()
+        .then((event) {
+      if (event.docs.isNotEmpty) {
+        Map<String, dynamic> pointsData = event.docs.single.data();
+        currPoints = pointsData['points'];
+      }
+    }).catchError((e) => print("error fetching data: $e"));
+    return currPoints;
+  }
+
   @override
   Widget build(BuildContext context) {
-    const cutOffYValue = 0.0;
-    final yearTextStyle = GoogleFonts.lato(
-      textStyle: TextStyle(
-          fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold),
-    );
-
-    return Container(
-      child: LineChart(
-        LineChartData(
-          lineTouchData: LineTouchData(enabled: false),
-          lineBarsData: [
-            LineChartBarData(
-              spots: [
-                FlSpot(0, 0),
-                FlSpot(1, 1),
-                FlSpot(2, 3),
-                FlSpot(3, 3),
-                FlSpot(4, 5),
-                FlSpot(4, 6),
-                FlSpot(5, 6),
-                FlSpot(6, 7),
-              ],
-              isCurved: true,
-              barWidth: 2,
-              colors: [
-                Colors.black,
-              ],
-              belowBarData: BarAreaData(
-                show: true,
-                colors: [Colors.lightGreen.withOpacity(0.4)],
-                cutOffY: cutOffYValue,
-                applyCutOffY: true,
-              ),
-              aboveBarData: BarAreaData(
-                show: true,
-                colors: [Colors.red.withOpacity(0.6)],
-                cutOffY: cutOffYValue,
-                applyCutOffY: true,
-              ),
-              dotData: FlDotData(
-                show: false,
-              ),
-            ),
-          ],
-          minY: 0,
-          titlesData: FlTitlesData(
-            bottomTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 7,
-                getTitles: (value) {
-                  switch (value.toInt()) {
-                    case 0:
-                      return '5th';
-                    case 1:
-                      return '6th';
-                    case 2:
-                      return '7th';
-                    case 3:
-                      return '8th';
-                    case 4:
-                      return '9th';
-                    case 5:
-                      return '10th';
-                    case 6:
-                      return '11th';
-                    default:
-                      return '';
-                  }
-                }),
-            leftTitles: SideTitles(
-              showTitles: true,
-              getTitles: (value) {
-                return '$value';
-              },
+    return Stack(
+      fit: StackFit.expand,
+      children: <Widget>[
+        Container(
+          decoration: const BoxDecoration(color: Color(0xff232d37)),
+          child: Padding(
+            padding: const EdgeInsets.only(
+                right: 18.0, left: 12.0, top: 24, bottom: 12),
+            child: LineChart(
+              mainData(),
             ),
           ),
-          axisTitleData: FlAxisTitleData(
-              leftTitle: AxisTitle(
-                showTitle: true,
-                titleText: 'Questions',
-                margin: 10,
-                textStyle: yearTextStyle,
-              ),
-              bottomTitle: AxisTitle(
-                  showTitle: true,
-                  margin: 20,
-                  titleText: 'Date',
-                  textStyle: yearTextStyle,
-                  textAlign: TextAlign.right)),
-          gridData: FlGridData(
+        ),
+      ],
+    );
+  }
+
+  LineChartData mainData() {
+    final List<FlSpot> _values = oneten
+        .map(
+            (minilist) => FlSpot(oneten.indexOf(minilist).toDouble(), minilist))
+        .toList();
+
+    final yearTextStyle = TextStyle(
+      color: Color(0xff67727d),
+      fontWeight: FontWeight.bold,
+      fontSize: 15,
+    );
+
+    return LineChartData(
+      lineBarsData: [
+        LineChartBarData(
+          spots: _values,
+          isCurved: true,
+          colors: gradientColors,
+          barWidth: 2,
+          isStrokeCapRound: true,
+          dotData: FlDotData(
             show: true,
-            checkToShowHorizontalLine: (double value) {
+            checkToShowDot: (spot, barData) {
+              if (spot.x != _percentileInt) {
+                return false;
+              }
               return true;
             },
           ),
+          belowBarData: BarAreaData(
+            show: true,
+            colors:
+                gradientColors.map((color) => color.withOpacity(0.3)).toList(),
+          ),
+        ),
+        LineChartBarData(
+          spots: [
+            FlSpot((_percentileInt == null) ? 5.0 : _percentileInt.toDouble(),
+                0.0),
+            FlSpot((_percentileInt == null) ? 5.0 : _percentileInt.toDouble(),
+                (_percentileInt == null) ? 9.010 : oneten[_percentileInt]),
+          ],
+          barWidth: 2,
+          isCurved: false,
+        ),
+      ],
+      gridData: FlGridData(
+        show: true,
+        drawVerticalLine: true,
+        getDrawingHorizontalLine: (value) {
+          return FlLine(
+            color: const Color(0xff37434d),
+            strokeWidth: 1,
+          );
+        },
+        getDrawingVerticalLine: (value) {
+          return FlLine(
+            color: const Color(0xff37434d),
+            strokeWidth: 1,
+          );
+        },
+      ),
+      titlesData: FlTitlesData(
+        show: true,
+        bottomTitles: SideTitles(
+          showTitles: true,
+          reservedSize: 20,
+          getTextStyles: (value) =>
+              const TextStyle(color: Color(0xff68737d), fontSize: 12),
+          getTitles: (value) {
+            switch (value.toInt()) {
+              case 0:
+                return '0th';
+              case 1:
+                return '10th';
+              case 2:
+                return '20th';
+              case 3:
+                return '30th';
+              case 4:
+                return '40th';
+              case 5:
+                return '50th';
+              case 6:
+                return '60th';
+              case 7:
+                return '70th';
+              case 8:
+                return '80th';
+              case 9:
+                return '90th';
+              case 10:
+                return '99th';
+              default:
+                return '';
+            }
+          },
+          margin: 15,
+        ),
+        leftTitles: SideTitles(
+          showTitles: true,
+          getTextStyles: (value) => yearTextStyle,
+          getTitles: (value) {
+            return '$value';
+          },
+          reservedSize: 28,
+          margin: 12,
         ),
       ),
+      axisTitleData: FlAxisTitleData(
+          leftTitle: AxisTitle(
+            showTitle: true,
+            titleText: 'Density of users',
+            margin: 10,
+            textStyle: yearTextStyle,
+          ),
+          bottomTitle: AxisTitle(
+              showTitle: true,
+              margin: 16,
+              titleText: 'Cumulative percentile',
+              textStyle: yearTextStyle,
+              textAlign: TextAlign.right)),
+      borderData: FlBorderData(
+          show: true,
+          border: Border.all(color: const Color(0xff37434d), width: 1)),
+      minY: 0,
     );
   }
 }

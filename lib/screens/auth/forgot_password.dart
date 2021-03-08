@@ -1,8 +1,22 @@
+import 'package:Quipia/screens/auth/login_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:Quipia/widgets/widgets.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class ForgotPassword extends StatelessWidget {
+class ForgotPassword extends StatefulWidget {
+  @override
+  _ForgotPasswordState createState() => _ForgotPasswordState();
+}
+
+class _ForgotPasswordState extends State<ForgotPassword> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  String _email;
+  Future<void> _resetPassword(String email) async {
+    await _auth.sendPasswordResetEmail(email: email);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,9 +81,36 @@ class ForgotPassword extends StatelessWidget {
                   inputType: TextInputType.emailAddress,
                   inputAction: TextInputAction.done,
                   obscure: false,
+                  onChanged: (text) {
+                    _email = text;
+                  },
                 ),
                 SizedBox(
                   height: 20,
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 30, right: 30),
+                  child: ButtonTheme(
+                    buttonColor: Colors.white,
+                    minWidth: MediaQuery.of(context).size.width,
+                    height: 50,
+                    child: RaisedButton(
+                      onPressed: () {
+                        _resetPassword(_email).then((value) {
+                          Navigator.push(
+                              context,
+                              new MaterialPageRoute(
+                                  builder: (context) => Loginscreen()));
+                        }).catchError((e) => print(e));
+                      },
+                      child: Text(
+                        'Send Password',
+                        style: TextStyle(color: Colors.grey[800], fontSize: 22),
+                      ),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25)),
+                    ),
+                  ),
                 ),
               ],
             ),

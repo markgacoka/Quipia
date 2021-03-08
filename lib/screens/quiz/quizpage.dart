@@ -26,7 +26,7 @@ class QuizPage extends HookWidget {
     return Container(
       height: MediaQuery.of(context).size.height,
       width: MediaQuery.of(context).size.width,
-      decoration: BoxDecoration(color: Colors.purple[400]),
+      decoration: BoxDecoration(color: Theme.of(context).canvasColor),
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: quizQuestions.when(
@@ -41,16 +41,16 @@ class QuizPage extends HookWidget {
             final quizState = useProvider(quizControllerProvider.state);
             if (!quizState.answered) return const SizedBox.shrink();
             return CustomButton(
-                title: pageController.page.toInt() + 1 < questions.length
+                title: pageController.page.toInt() < questions.length
                     ? 'Next Question'
                     : 'See Results',
-                onTap: () {
+                onTap: () async {
                   context
                       .read(quizControllerProvider)
                       .nextQuestion(questions, pageController.page.toInt());
                   if (pageController.page.toInt() + 1 < questions.length) {
                     pageController.nextPage(
-                      duration: const Duration(milliseconds: 250),
+                      duration: const Duration(milliseconds: 20),
                       curve: Curves.linear,
                     );
                   }
@@ -100,6 +100,8 @@ class QuizQuestions extends StatefulWidget {
 
 class _QuizQuestionsState extends State<QuizQuestions> {
   int points = 0;
+  String url =
+      "https://assets.mixkit.co/sfx/preview/mixkit-simple-game-countdown-921.mp3";
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +130,7 @@ class _QuizQuestionsState extends State<QuizQuestions> {
                   ),
                   SizedBox(width: 20),
                   CircularCountDownTimer(
-                    duration: 10,
+                    duration: 16,
                     initialDuration: 0,
                     controller: CountDownController(),
                     width: MediaQuery.of(context).size.width / 11,
@@ -137,9 +139,9 @@ class _QuizQuestionsState extends State<QuizQuestions> {
                     ringGradient: null,
                     fillColor: Colors.deepPurple,
                     fillGradient: null,
-                    backgroundColor: Colors.purple[500],
+                    backgroundColor: Theme.of(context).canvasColor,
                     backgroundGradient: null,
-                    strokeWidth: 20.0,
+                    strokeWidth: 10.0,
                     strokeCap: StrokeCap.round,
                     textStyle: TextStyle(
                         fontSize: 20.0,
@@ -147,14 +149,23 @@ class _QuizQuestionsState extends State<QuizQuestions> {
                         fontWeight: FontWeight.bold),
                     textFormat: CountdownTextFormat.S,
                     isReverse: true,
-                    isReverseAnimation: true,
+                    isReverseAnimation: false,
                     isTimerTextShown: true,
                     autoStart: true,
                     onStart: () {
-                      print('Countdown Started');
+                      if (widget.questions.isEmpty == false &&
+                          widget.state.status != QuizStatus.complete) {}
                     },
-                    onComplete: () {
-                      print('Countdown Ended');
+                    onComplete: () async {
+                      context.read(quizControllerProvider).nextQuestion(
+                          widget.questions, widget.pageController.page.toInt());
+                      if (widget.pageController.page.toInt() <
+                          widget.questions.length) {
+                        widget.pageController.nextPage(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.linear,
+                        );
+                      }
                     },
                   ),
                   SizedBox(width: 20),
@@ -276,25 +287,36 @@ class QuizError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            message,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20.0,
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios),
+          onPressed: () => Navigator.pop(context),
+        ),
+        elevation: 0.0,
+        backgroundColor: Colors.transparent,
+      ),
+      backgroundColor: Colors.purple[400],
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20.0,
+              ),
             ),
-          ),
-          const SizedBox(height: 20.0),
-          CustomButton(
-            title: 'Retry',
-            onTap: () => context.refresh(quizRepositoryProvider),
-            color: Colors.yellow[700],
-            color2: Colors.black,
-          ),
-        ],
+            const SizedBox(height: 20.0),
+            CustomButton(
+              title: 'Retry',
+              onTap: () => context.refresh(quizRepositoryProvider),
+              color: Colors.yellow[700],
+              color2: Colors.black,
+            ),
+          ],
+        ),
       ),
     );
   }

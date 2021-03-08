@@ -8,6 +8,7 @@ class TextInputField extends StatelessWidget {
     this.inputType,
     this.inputAction,
     this.obscure,
+    this.onChanged,
   }) : super(key: key);
 
   final IconData icon;
@@ -15,6 +16,7 @@ class TextInputField extends StatelessWidget {
   final TextInputType inputType;
   final TextInputAction inputAction;
   final bool obscure;
+  final onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +35,7 @@ class TextInputField extends StatelessWidget {
         ),
         child: Center(
           child: TextField(
+            onChanged: onChanged,
             decoration: InputDecoration(
               border: InputBorder.none,
               prefixIcon: Padding(

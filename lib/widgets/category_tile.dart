@@ -2,12 +2,12 @@ import 'package:Quipia/screens/levels.dart';
 import 'package:flutter/material.dart';
 
 class CategoryTile extends StatelessWidget {
-  final String imageUrl, title, description;
+  final String imagePath, title, description;
   final int noOfQuestions, id;
 
   CategoryTile(
       {@required this.title,
-      @required this.imageUrl,
+      @required this.imagePath,
       @required this.description,
       @required this.id,
       @required this.noOfQuestions});
@@ -36,7 +36,8 @@ class CategoryTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             child: Stack(
               children: [
-                Image.network(imageUrl,
+                Image(
+                    image: AssetImage(imagePath),
                     fit: BoxFit.cover,
                     width: MediaQuery.of(context).size.width),
                 Container(

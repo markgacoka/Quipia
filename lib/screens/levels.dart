@@ -1,4 +1,6 @@
 import 'package:Quipia/models/question_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:Quipia/widgets/widgets.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -16,6 +18,59 @@ class LevelsPage extends StatefulWidget {
 }
 
 class _LevelsPageState extends State<LevelsPage> {
+  bool unlocked = true;
+  bool unlockedEasy = false;
+  bool unlockedMedium = false;
+  bool unlockedHard = false;
+  final int thresholdEasy = 200;
+  final int thresholdMedium = 500;
+  final int thresholdHard = 1000;
+  String currPointsLevels;
+  int currPointsInt;
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      _getPointsDB().then((val) => setState(() {
+            currPointsLevels = val;
+            currPointsInt = int.tryParse(currPointsLevels);
+
+            if (currPointsInt > thresholdEasy) {
+              setState(() {
+                unlockedEasy = true;
+              });
+            }
+            if (currPointsInt > thresholdMedium) {
+              setState(() {
+                unlockedMedium = true;
+              });
+            }
+            if (currPointsInt > thresholdHard) {
+              setState(() {
+                unlockedHard = true;
+              });
+            }
+          }));
+    });
+  }
+
+  Future<String> _getPointsDB() async {
+    String currPoints;
+    final String userUID = FirebaseAuth.instance.currentUser.uid;
+    await FirebaseFirestore.instance
+        .collection('points')
+        .where(FieldPath.documentId, isEqualTo: userUID)
+        .get()
+        .then((event) {
+      if (event.docs.isNotEmpty) {
+        Map<String, dynamic> pointsData = event.docs.single.data();
+        currPoints = pointsData['points'];
+      }
+    }).catchError((e) => print("error fetching data: $e"));
+    return currPoints;
+  }
+
   @override
   Widget build(BuildContext context) {
     final quizQuestionsProviderEasy =
@@ -74,98 +129,131 @@ class _LevelsPageState extends State<LevelsPage> {
             Padding(padding: EdgeInsets.only(top: 50)),
             GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          QuizPage(quizQuestionsProviderEasy)),
-                );
+                if (unlocked == true) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            QuizPage(quizQuestionsProviderEasy)),
+                  );
+                } else {
+                  return null;
+                }
               },
               child: CardListTile(
                 title: "Level 1",
                 subtitle: "Unlocked",
-                unlocked: true,
+                unlocked: unlocked,
               ),
             ),
             SizedBox(height: 5),
             GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          QuizPage(quizQuestionsProviderEasy)),
-                );
+                if (unlocked == true) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            QuizPage(quizQuestionsProviderEasy)),
+                  );
+                } else {
+                  return null;
+                }
               },
               child: CardListTile(
                 title: "Level 2",
-                subtitle: "Locked",
-                unlocked: false,
+                subtitle: (unlockedEasy == true)
+                    ? "Unlocked"
+                    : "Locked. Unlock at ${thresholdEasy.toString()}",
+                unlocked: unlockedEasy,
               ),
             ),
             SizedBox(height: 5),
             GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          QuizPage(quizQuestionsProviderMedium)),
-                );
+                if (unlocked == true) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            QuizPage(quizQuestionsProviderMedium)),
+                  );
+                } else {
+                  return null;
+                }
               },
               child: CardListTile(
                 title: "Level 3",
-                subtitle: "Locked",
-                unlocked: false,
+                subtitle: (unlockedMedium == true)
+                    ? "Unlocked"
+                    : "Locked. Unlock at ${thresholdMedium.toString()}",
+                unlocked: unlockedMedium,
               ),
             ),
             SizedBox(height: 5),
             GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          QuizPage(quizQuestionsProviderMedium)),
-                );
+                if (unlocked == true) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            QuizPage(quizQuestionsProviderMedium)),
+                  );
+                } else {
+                  return null;
+                }
               },
               child: CardListTile(
                 title: "Level 4",
-                subtitle: "Locked",
-                unlocked: false,
+                subtitle: (unlockedMedium == true)
+                    ? "Unlocked"
+                    : "Locked. Unlock at ${thresholdMedium.toString()}",
+                unlocked: unlockedMedium,
               ),
             ),
             SizedBox(height: 5),
             GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          QuizPage(quizQuestionsProviderHard)),
-                );
+                if (unlocked == true) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            QuizPage(quizQuestionsProviderHard)),
+                  );
+                } else {
+                  return null;
+                }
               },
               child: CardListTile(
                 title: "Level 5",
-                subtitle: "Locked",
-                unlocked: false,
+                subtitle: (unlockedHard == true)
+                    ? "Unlocked"
+                    : "Locked. Unlock at ${thresholdHard.toString()}",
+                unlocked: unlockedHard,
               ),
             ),
             SizedBox(height: 5),
             GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          QuizPage(quizQuestionsProviderHard)),
-                );
+                if (unlocked == true) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            QuizPage(quizQuestionsProviderHard)),
+                  );
+                } else {
+                  return null;
+                }
               },
               child: CardListTile(
-                title: "Level 6",
-                subtitle: "Locked",
-                unlocked: false,
-              ),
+                  title: "Level 6",
+                  subtitle: (unlockedHard == true)
+                      ? "Unlocked"
+                      : "Locked. Unlock at ${thresholdHard.toString()}",
+                  unlocked: unlockedHard),
             ),
           ],
         ),

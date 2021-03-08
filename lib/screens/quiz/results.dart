@@ -1,3 +1,4 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:Quipia/controllers/quiz/quiz_state.dart';
 import 'package:Quipia/models/question_model.dart';
@@ -8,6 +9,8 @@ import 'package:confetti/confetti.dart';
 import 'package:Quipia/screens/screens.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:firebase_admob/firebase_admob.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class QuizResults extends StatefulWidget {
   final QuizState state;
@@ -26,46 +29,99 @@ class _QuizResultsState extends State<QuizResults> {
   ConfettiController _controllerCenter;
   int points;
   static const MobileAdTargetingInfo targetingInfo = MobileAdTargetingInfo();
+  final CollectionReference collectionReference =
+      FirebaseFirestore.instance.collection('points');
+  final String userUID = FirebaseAuth.instance.currentUser.uid;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  InterstitialAd _interstitialAd;
+  AudioPlayer audioPlayer = AudioPlayer();
+  String rewardUrl =
+      "https://assets.mixkit.co/sfx/preview/mixkit-bonus-earned-in-video-game-2058.mp3";
+  String endLevelUrl =
+      "https://assets.mixkit.co/sfx/preview/mixkit-extra-bonus-in-a-video-game-2045.mp3";
 
   @override
   void initState() {
     super.initState();
+    _play();
     FirebaseAdMob.instance
         .initialize(appId: 'ca-app-pub-8323754226268458~7511554081');
+    _interstitialAd = createInterstitialAd()..load();
+    _interstitialAd?.show();
     RewardedVideoAd.instance.load(
-        adUnitId: RewardedVideoAd.testAdUnitId, targetingInfo: targetingInfo);
+        adUnitId: "ca-app-pub-8323754226268458/6569991592",
+        targetingInfo: targetingInfo);
     RewardedVideoAd.instance.listener =
         (RewardedVideoAdEvent event, {String rewardType, int rewardAmount}) {
       print('Rewarded event: $event');
       if (event == RewardedVideoAdEvent.rewarded) {
-        setState(() {
-          points += rewardAmount;
-        });
+        setState(() {});
       }
     };
   }
 
-  @override
-  void dispose() {
-    _controllerCenter.dispose();
-    super.dispose();
+  InterstitialAd createInterstitialAd() {
+    return InterstitialAd(
+        targetingInfo: targetingInfo,
+        adUnitId: "ca-app-pub-8323754226268458/1781257828",
+        listener: (MobileAdEvent event) {
+          print('interstitial event: $event');
+        });
+  }
+
+  Future _addData(int points) async {
+    Future<String> currPoints = _getPointsDB();
+    return await collectionReference.doc(userUID).set({
+      'name': _auth.currentUser.displayName,
+      "points": (points + int.parse(await currPoints)).toString(),
+    });
+  }
+
+  Future _addReward(int reward) async {
+    Future<String> currPointsReward = _getPointsDB();
+    return await collectionReference.doc(userUID).set({
+      'name': _auth.currentUser.displayName,
+      "points": (reward + int.parse(await currPointsReward)).toString(),
+    });
+  }
+
+  Future<String> _getPointsDB() async {
+    String currPoints;
+    await FirebaseFirestore.instance
+        .collection('points')
+        .where(FieldPath.documentId, isEqualTo: userUID)
+        .get()
+        .then((event) {
+      if (event.docs.isNotEmpty) {
+        Map<String, dynamic> pointsData = event.docs.single.data();
+        currPoints = pointsData['points'];
+      }
+    }).catchError((e) => print("error fetching data: $e"));
+    return currPoints;
+  }
+
+  _play() async {
+    int result = await audioPlayer.play(endLevelUrl);
+    if (result == 1) {
+      // success
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     points = widget.state.correct.length * 10;
     const curveHeight = 20.0;
+    _addData(points);
 
     return ProviderScope(
       child: Container(
-        decoration: new BoxDecoration(
-          color: Colors.deepPurple[700],
-          image: new DecorationImage(
+        decoration: BoxDecoration(
+          image: DecorationImage(
             fit: BoxFit.cover,
             colorFilter: new ColorFilter.mode(
-                Colors.black.withOpacity(0.5), BlendMode.dstATop),
-            image: new NetworkImage(
-              'https://cdn.pixabay.com/photo/2016/10/20/18/35/earth-1756274_960_720.jpg',
+                Colors.black.withOpacity(0.6), BlendMode.dstATop),
+            image: AssetImage(
+              'assets/images/thumbnails/background_results.jpg',
             ),
           ),
         ),
@@ -107,27 +163,21 @@ class _QuizResultsState extends State<QuizResults> {
                 Expanded(
                   child: GestureDetector(
                     onTap: () async {
+                      await RewardedVideoAd.instance.show();
+                      _addReward(10);
+                      Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => HomePage()));
                       context.refresh(quizRepositoryProvider);
                       context.read(quizControllerProvider).reset();
-                      await RewardedVideoAd.instance.show();
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => HomePage(points: points)));
                     },
                     child: Container(
                       child: ResultsTile(
                         title: "Watch Ad",
                         subtitle: "+10 points",
                         icon: IconButton(
-                          icon:
-                              Icon(Icons.play_circle_fill, color: Colors.white),
-                          onPressed: () {
-                            context.refresh(quizRepositoryProvider);
-                            context.read(quizControllerProvider).reset();
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) =>
-                                    HomePage(points: points)));
-                          },
-                        ),
+                            icon: Icon(Icons.play_circle_fill,
+                                color: Colors.white),
+                            onPressed: null),
                       ),
                     ),
                   ),
@@ -135,7 +185,7 @@ class _QuizResultsState extends State<QuizResults> {
                 SizedBox(width: 20),
               ],
             ),
-            (widget.state.correct.length > 7)
+            (widget.state.correct.length > 5)
                 ? ConfettiWidget(
                     confettiController: _controllerCenter,
                     blastDirectionality: BlastDirectionality.explosive,
@@ -150,7 +200,7 @@ class _QuizResultsState extends State<QuizResults> {
                       Colors.pink,
                       Colors.orange,
                       Colors.purple
-                    ], // manually specify the colors to be used
+                    ],
                   )
                 : SizedBox.shrink(),
             Padding(
@@ -217,9 +267,7 @@ class _QuizResultsState extends State<QuizResults> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => HomePage(
-                      points: points,
-                    ),
+                    builder: (_) => HomePage(),
                   ),
                 );
               },
@@ -230,5 +278,12 @@ class _QuizResultsState extends State<QuizResults> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _controllerCenter?.dispose();
+    _interstitialAd?.dispose();
+    super.dispose();
   }
 }
