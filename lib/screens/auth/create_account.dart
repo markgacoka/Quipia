@@ -1,9 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:Quipia/providers/auth_provider.dart';
+import 'package:Quipia/providers/login_providers.dart';
+import 'package:Quipia/screens/auth/verify%20screen.dart';
+import 'package:alert_dialogs/alert_dialogs.dart';
 import 'package:flutter/material.dart';
 import 'package:Quipia/widgets/widgets.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:Quipia/screens/screens.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class SignUpScreen extends StatefulWidget {
   @override
@@ -11,46 +13,49 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
-
-  String _name, _email, _password;
-
-  checkAuthentication() async {
-    _auth.authStateChanges().listen((user) {
-      if (user != null) {
-        Navigator.pushReplacementNamed(context, '/home');
-      }
-    });
-  }
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _password1Controller = TextEditingController();
+  final _password2Controller = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    this.checkAuthentication();
   }
 
-  _signUp(email, password, name) async {
-    if (_formkey.currentState.validate()) {
-      _formkey.currentState.save();
+  void updateName(BuildContext context, String name) {
+    context.read(nameProvider).state = name;
+  }
 
-      try {
-        UserCredential user = await _auth.createUserWithEmailAndPassword(
-          email: email,
-          password: password,
-        );
-        if (user != null) {
-          await FirebaseAuth.instance.currentUser
-              .updateProfile(displayName: name);
-          await FirebaseFirestore.instance
-              .collection('points')
-              .doc(user.user.uid)
-              .set({'name': _name, 'points': '0'});
-        }
-      } catch (e) {
-        showError(e);
-      }
-    }
+  void updateEmail(BuildContext context, String email) {
+    context.read(emailProvider).state = email;
+  }
+
+  void updatePassword(BuildContext context, String pass) {
+    context.read(passwordProvider).state = pass;
+  }
+
+  Future<void> _validateFieldInput(BuildContext context) async {
+    final bool didRequestSignOut = await showAlertDialog(
+          context: context,
+          title: 'Error!',
+          content: 'Field cannot be empty.',
+          defaultActionText: "Ok",
+        ) ??
+        false;
+    if (didRequestSignOut == true) {}
+  }
+
+  Future<void> _validatePasswordInput(BuildContext context) async {
+    final bool didRequestSignOut = await showAlertDialog(
+          context: context,
+          title: 'Error!',
+          content: 'Passwords do not match.',
+          defaultActionText: "Ok",
+        ) ??
+        false;
+    if (didRequestSignOut == true) {}
   }
 
   showError(String errormessage) {
@@ -74,137 +79,160 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        elevation: 0,
-        toolbarHeight: 100,
-        leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios),
-            onPressed: () {
-              Navigator.pop(context);
-            }),
-      ),
-      resizeToAvoidBottomInset: false,
-      body: GestureDetector(
-        onTap: () {
-          FocusScopeNode currentFocus = FocusScope.of(context);
-
-          if (!currentFocus.hasPrimaryFocus) {
-            currentFocus.unfocus();
-          }
-        },
-        child: Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-                image: AssetImage('assets/images/1.png'), fit: BoxFit.cover),
-            gradient: LinearGradient(
-                colors: [Colors.blue[400], Colors.deepPurple],
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter),
+    return Consumer(
+      builder: (context, watch, child) {
+        final name = watch(nameProvider).state;
+        final email = watch(emailProvider).state;
+        final password = watch(passwordProvider).state;
+        final _auth = watch(authServicesProvider);
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            elevation: 0,
+            toolbarHeight: 100,
+            leading: IconButton(
+                icon: Icon(Icons.arrow_back_ios),
+                onPressed: () {
+                  Navigator.pop(context);
+                }),
           ),
-          child: Center(
-            child: Column(
-              children: <Widget>[
-                SizedBox(
-                  height: MediaQuery.of(context).size.width / 8,
-                ),
-                Row(
+          resizeToAvoidBottomInset: false,
+          body: GestureDetector(
+            onTap: () {
+              FocusScopeNode currentFocus = FocusScope.of(context);
+
+              if (!currentFocus.hasPrimaryFocus) {
+                currentFocus.unfocus();
+              }
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                    image: AssetImage('assets/images/1.png'),
+                    fit: BoxFit.cover),
+                gradient: LinearGradient(
+                    colors: [Colors.blue[400], Colors.deepPurple],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter),
+              ),
+              child: Center(
+                child: Column(
                   children: <Widget>[
                     SizedBox(
-                      width: 40,
+                      height: MediaQuery.of(context).size.width / 8,
                     ),
-                    Text(
-                      'Create Account',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 35),
+                    Row(
+                      children: <Widget>[
+                        SizedBox(
+                          width: 40,
+                        ),
+                        Text(
+                          'Create Account',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 35),
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height / 10,
+                    ),
+                    Form(
+                      key: _formkey,
+                      child: Column(
+                        children: <Widget>[
+                          TextInputField(
+                            icon: FontAwesomeIcons.user,
+                            hint: 'Username',
+                            inputType: TextInputType.name,
+                            inputAction: TextInputAction.next,
+                            obscure: false,
+                            onChanged: (text) {
+                              updateName(context, text);
+                            },
+                            controller: _nameController,
+                          ),
+                          TextInputField(
+                            icon: FontAwesomeIcons.envelope,
+                            hint: 'Email',
+                            inputType: TextInputType.emailAddress,
+                            inputAction: TextInputAction.next,
+                            obscure: false,
+                            onChanged: (text) {
+                              updateEmail(context, text);
+                            },
+                            controller: _emailController,
+                          ),
+                          TextInputField(
+                            icon: FontAwesomeIcons.lock,
+                            hint: 'Password',
+                            inputAction: TextInputAction.next,
+                            obscure: true,
+                            onChanged: (text) {},
+                            controller: _password1Controller,
+                          ),
+                          TextInputField(
+                            icon: FontAwesomeIcons.lock,
+                            hint: 'Confirm Password',
+                            inputAction: TextInputAction.done,
+                            obscure: true,
+                            onChanged: (text) {
+                              updatePassword(context, text);
+                            },
+                            controller: _password2Controller,
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      height: 25,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 25, right: 25),
+                      child: ButtonTheme(
+                          buttonColor: Colors.white,
+                          minWidth: MediaQuery.of(context).size.width,
+                          height: 55,
+                          child: RaisedButton(
+                            onPressed: () {
+                              if (_password1Controller.text !=
+                                  _password2Controller.text) {
+                                _validatePasswordInput(context);
+                                _password1Controller.clear();
+                                _password2Controller.clear();
+                              } else if (_password1Controller.text.isEmpty ||
+                                  _password2Controller.text.isEmpty ||
+                                  _emailController.text.isEmpty ||
+                                  _nameController.text.isEmpty) {
+                                _validateFieldInput(context);
+                              } else {
+                                _auth.signUp(
+                                    name: name,
+                                    email: email,
+                                    password: password);
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (ctx) => VerifyScreen()));
+                              }
+                            },
+                            child: Text(
+                              'Create',
+                              style: TextStyle(
+                                  color: Colors.grey[800], fontSize: 22),
+                            ),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25)),
+                          )),
                     ),
                   ],
                 ),
-                SizedBox(
-                  height: MediaQuery.of(context).size.height / 10,
-                ),
-                Form(
-                  key: _formkey,
-                  child: Column(
-                    children: <Widget>[
-                      TextInputField(
-                        icon: FontAwesomeIcons.user,
-                        hint: 'Username',
-                        inputType: TextInputType.name,
-                        inputAction: TextInputAction.next,
-                        obscure: false,
-                        onChanged: (text) {
-                          _name = text;
-                        },
-                      ),
-                      TextInputField(
-                        icon: FontAwesomeIcons.envelope,
-                        hint: 'Email',
-                        inputType: TextInputType.emailAddress,
-                        inputAction: TextInputAction.next,
-                        obscure: false,
-                        onChanged: (text) {
-                          _email = text;
-                        },
-                      ),
-                      TextInputField(
-                        icon: FontAwesomeIcons.lock,
-                        hint: 'Password',
-                        inputAction: TextInputAction.next,
-                        obscure: true,
-                        onChanged: (text) {
-                          _password = text;
-                        },
-                      ),
-                      TextInputField(
-                        icon: FontAwesomeIcons.lock,
-                        hint: 'Confirm Password',
-                        inputAction: TextInputAction.done,
-                        obscure: true,
-                        onChanged: (text) {
-                          _password = text;
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  height: 25,
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 25, right: 25),
-                  child: ButtonTheme(
-                      buttonColor: Colors.white,
-                      minWidth: MediaQuery.of(context).size.width,
-                      height: 55,
-                      child: RaisedButton(
-                        onPressed: () {
-                          _signUp(_email, _password, _name)
-                              .then((UserCredential user) async {
-                            await user.user.sendEmailVerification();
-                            Navigator.push(
-                                context,
-                                new MaterialPageRoute(
-                                    builder: (context) => HomePage()));
-                          }).catchError((e) => print(e));
-                        },
-                        child: Text(
-                          'Create',
-                          style:
-                              TextStyle(color: Colors.grey[800], fontSize: 22),
-                        ),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25)),
-                      )),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

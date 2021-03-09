@@ -11,6 +11,7 @@ class Leaderboard extends StatefulWidget {
 class _LeaderboardState extends State<Leaderboard> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   String currPointsLeaderboard;
+  int lastPoint;
 
   @override
   void initState() {
@@ -20,7 +21,6 @@ class _LeaderboardState extends State<Leaderboard> {
             currPointsLeaderboard = val;
           }));
     });
-    getData();
   }
 
   Future<String> _getPointsDB() async {
@@ -94,7 +94,7 @@ class _LeaderboardState extends State<Leaderboard> {
                               child: Text("Leaderboard",
                                   style: TextStyle(
                                       fontSize: 30,
-                                      color: Colors.green[200],
+                                      color: Colors.grey[300],
                                       fontWeight: FontWeight.w800)),
                             ),
                           ],
@@ -104,7 +104,7 @@ class _LeaderboardState extends State<Leaderboard> {
                             IconButton(
                                 icon: Icon(
                                   Icons.person,
-                                  color: Colors.green,
+                                  color: Colors.yellow,
                                 ),
                                 iconSize: 40,
                                 onPressed: null),

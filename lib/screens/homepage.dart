@@ -15,9 +15,6 @@ import 'package:flutter_native_admob/native_admob_controller.dart';
 import 'dart:math';
 
 class HomePage extends StatefulWidget {
-  HomePage({Key key, this.title}) : super(key: key);
-
-  final String title;
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -27,9 +24,9 @@ class _HomePageState extends State<HomePage> {
   int noOfQuestions = 10;
   final InAppReview inAppReview = InAppReview.instance;
   int totalPoints;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final _nativeAdController = NativeAdmobController();
   String currPointsHome;
+  FirebaseAuth _auth;
 
   RateMyApp rateMyApp = RateMyApp(
     preferencesPrefix: 'rateMyApp_',
@@ -40,36 +37,12 @@ class _HomePageState extends State<HomePage> {
     googlePlayIdentifier: 'com.application.Quipia',
   );
 
-  _checkAuthentication() async {
-    _auth.authStateChanges().listen((user) {
-      if (user == null) {
-        Navigator.pushReplacementNamed(context, '/signin');
-      }
-    });
-  }
-
-  Future<String> _getPointsDB() async {
-    String currPoints;
-    final String userUID = FirebaseAuth.instance.currentUser.uid;
-    await FirebaseFirestore.instance
-        .collection('points')
-        .where(FieldPath.documentId, isEqualTo: userUID)
-        .get()
-        .then((event) {
-      if (event.docs.isNotEmpty) {
-        Map<String, dynamic> pointsData = event.docs.single.data();
-        currPoints = pointsData['points'];
-      }
-    }).catchError((e) => print("error fetching data: $e"));
-    return currPoints;
-  }
-
   @override
   void initState() {
     super.initState();
-    _checkAuthentication();
     setState(() {
-      _getPointsDB().then((val) => setState(() {
+      _auth = FirebaseAuth.instance;
+      _getPointsDB(_auth).then((val) => setState(() {
             currPointsHome = val;
           }));
     });
@@ -127,6 +100,22 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Future<String> _getPointsDB(auth) async {
+    String currPoints;
+    final String userUID = auth.currentUser.uid;
+    await FirebaseFirestore.instance
+        .collection('points')
+        .where(FieldPath.documentId, isEqualTo: userUID)
+        .get()
+        .then((event) {
+      if (event.docs.isNotEmpty) {
+        Map<String, dynamic> pointsData = event.docs.single.data();
+        currPoints = pointsData['points'];
+      }
+    }).catchError((e) => print("error fetching data: $e"));
+    return currPoints;
+  }
+
   @override
   Widget build(BuildContext context) {
     const curveHeight = 70.0;
@@ -168,7 +157,8 @@ class _HomePageState extends State<HomePage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => SettingsPage()),
+                              builder: (context) => SettingsPage(),
+                            ),
                           );
                         },
                       ),
@@ -190,7 +180,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   Container(
                     child: Text(
-                      _auth.currentUser.displayName ?? "loading...",
+                      _auth.currentUser?.displayName ?? "loading...",
                       style: TextStyle(
                         fontSize: 18,
                         color: Colors.white,
@@ -408,7 +398,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    _nativeAdController.dispose();
+    _nativeAdController?.dispose();
     super.dispose();
   }
 }

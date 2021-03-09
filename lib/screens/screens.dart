@@ -4,6 +4,7 @@ export 'levels.dart';
 export 'leaderboard.dart';
 export 'auth/create_account.dart';
 export 'auth/forgot_password.dart';
+export 'auth/verify screen.dart';
 export 'auth/login_page.dart';
 export 'quiz/results.dart';
 export 'quiz/quizpage.dart';

@@ -1,3 +1,4 @@
+import 'package:Quipia/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:Quipia/screens/screens.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -33,13 +34,63 @@ class MyApp extends HookWidget {
             appThemeState.isDarkModeEnabled ? ThemeMode.dark : ThemeMode.light,
         title: 'Quizzier',
         debugShowCheckedModeBanner: false,
-        home: HomePage(),
-        routes: {
-          '/home': (BuildContext context) => HomePage(),
-          '/signin': (BuildContext context) => Loginscreen(),
-          '/signup': (BuildContext context) => SignUpScreen(),
-        },
+        home: StartPage(),
       ),
+    );
+  }
+}
+
+class StartPage extends StatelessWidget {
+  final Future<FirebaseApp> _initialization = Firebase.initializeApp();
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: _initialization,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Text("Something Went wrong"),
+          );
+        }
+        if (snapshot.connectionState == ConnectionState.done) {
+          return AuthChecker();
+        }
+        //loading
+        return Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class AuthChecker extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, ScopedReader watch) {
+    final _authState = watch(authStateProvider);
+    return _authState.when(
+      data: (value) {
+        if (value != null) {
+          return HomePage();
+        }
+        return Loginscreen();
+      },
+      loading: () {
+        return Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      },
+      error: (_, __) {
+        return Scaffold(
+          body: Center(
+            child: Text("OOPS"),
+          ),
+        );
+      },
     );
   }
 }

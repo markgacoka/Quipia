@@ -43,7 +43,6 @@ class _QuizResultsState extends State<QuizResults> {
   @override
   void initState() {
     super.initState();
-    _play();
     FirebaseAdMob.instance
         .initialize(appId: 'ca-app-pub-8323754226268458~7511554081');
     _interstitialAd = createInterstitialAd()..load();
@@ -98,13 +97,6 @@ class _QuizResultsState extends State<QuizResults> {
       }
     }).catchError((e) => print("error fetching data: $e"));
     return currPoints;
-  }
-
-  _play() async {
-    int result = await audioPlayer.play(endLevelUrl);
-    if (result == 1) {
-      // success
-    }
   }
 
   @override

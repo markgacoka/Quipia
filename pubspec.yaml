@@ -10,41 +10,43 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons:
-  flutter_svg:
-  fl_chart:
-  google_fonts:
-  get:
-  websafe_svg:
-  dio: 
-  enum_to_string: 
-  equatable: 
-  flutter_hooks: 
-  hooks_riverpod: 
-  html_character_entities: 
-  meta: 
-  dart_random_choice:
-  font_awesome_flutter: 
-  rate_my_app: 
-  circular_countdown_timer:
-  confetti:
-  in_app_review:
-  like_button:
-  firebase_admob: 
-  firebase_core: 
-  firebase_auth:
-  flutter_native_admob: 
-  cloud_firestore:
-  google_sign_in:
-  flutter_facebook_auth:
-  flutter_webview_plugin:
-  audioplayers:
-  wiredash:
-  provider:
+
   alert_dialogs:
     git:
       url: https://github.com/bizz84/codewithandrea_flutter_packages
-      path: packages/alert_dialogs
+      path: packages/alert_dialogs  
+  audioplayers:
+  circular_countdown_timer:
+  cloud_firestore:
+  confetti:
+  cupertino_icons:
+  dart_random_choice:
+  dio: 
+  enum_to_string: 
+  equatable:
+  firebase_admob: 
+  firebase_auth:
+  firebase_core: 
+  flutter_facebook_login:
+  flutter_hooks: 
+  flutter_native_admob: 
+  flutter_webview_plugin:
+  flutter_svg:
+  fl_chart:
+  font_awesome_flutter: 
+  google_fonts:
+  google_sign_in:
+  get:
+  hooks_riverpod: 
+  html_character_entities: 
+  http:
+  in_app_review:
+  like_button:
+  meta: 
+  provider:
+  rate_my_app:
+  websafe_svg:
+  wiredash:
 
 dev_dependencies:
   flutter_test:
