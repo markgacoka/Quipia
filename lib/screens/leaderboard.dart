@@ -10,8 +10,7 @@ class Leaderboard extends StatefulWidget {
 
 class _LeaderboardState extends State<Leaderboard> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  String currPointsLeaderboard;
-  int lastPoint;
+  int currPointsLeaderboard;
 
   @override
   void initState() {
@@ -23,8 +22,8 @@ class _LeaderboardState extends State<Leaderboard> {
     });
   }
 
-  Future<String> _getPointsDB() async {
-    String currPoints;
+  Future<int> _getPointsDB() async {
+    int currPoints;
     final String userUID = FirebaseAuth.instance.currentUser.uid;
     await FirebaseFirestore.instance
         .collection('points')
@@ -39,14 +38,14 @@ class _LeaderboardState extends State<Leaderboard> {
     return currPoints;
   }
 
-  Future<List<DocumentSnapshot>> getData() async {
+  Future<List<DocumentSnapshot>> _getData() async {
     var firestore = FirebaseFirestore.instance;
-    QuerySnapshot qn = await firestore
+    QuerySnapshot qnAll = await firestore
         .collection("points")
         .orderBy("points", descending: true)
-        .limit(20)
+        .limit(30)
         .get();
-    return qn.docs;
+    return qnAll.docs;
   }
 
   @override
@@ -59,17 +58,6 @@ class _LeaderboardState extends State<Leaderboard> {
               flex: 4,
               child: Container(
                 color: Colors.deepPurple,
-                // decoration: BoxDecoration(
-                //   color: const Color(0xff7c94b6),
-                //   image: DecorationImage(
-                //     fit: BoxFit.cover,
-                //     colorFilter: ColorFilter.mode(
-                //         Colors.black.withOpacity(0.1), BlendMode.dstATop),
-                //     image: NetworkImage(
-                //       'https://cdn.pixabay.com/photo/2017/08/04/10/36/background-2579719__340.jpg',
-                //     ),
-                //   ),
-                // ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -121,7 +109,9 @@ class _LeaderboardState extends State<Leaderboard> {
                                 iconSize: 30,
                                 onPressed: null),
                             Text(
-                              currPointsLeaderboard ?? 'loading...',
+                              (currPointsLeaderboard == null)
+                                  ? 'loading...'
+                                  : currPointsLeaderboard.toString(),
                               style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
@@ -146,23 +136,57 @@ class _LeaderboardState extends State<Leaderboard> {
                   children: [
                     CircleAvatar(
                       radius: 25,
-                      backgroundImage: NetworkImage(
-                          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKaiKiPcLJj7ufrj6M2KaPwyCT4lDSFA5oog&usqp=CAU"),
+                      child: Image.asset(
+                        'assets/images/trophy.jpg',
+                        fit: BoxFit.fitHeight,
+                      ),
                     ),
                     CircleAvatar(
-                        radius: 35,
-                        backgroundImage: NetworkImage(
-                            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKaiKiPcLJj7ufrj6M2KaPwyCT4lDSFA5oog&usqp=CAU")),
+                      radius: 35,
+                      child: Image.asset(
+                        'assets/images/trophy.jpg',
+                        fit: BoxFit.scaleDown,
+                      ),
+                    ),
                     CircleAvatar(
-                        radius: 25,
-                        backgroundImage: NetworkImage(
-                            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKaiKiPcLJj7ufrj6M2KaPwyCT4lDSFA5oog&usqp=CAU")),
+                      radius: 25,
+                      child: Image.asset(
+                        'assets/images/trophy.jpg',
+                        fit: BoxFit.scaleDown,
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
             Expanded(
-              flex: 15,
+              flex: 1,
+              child: Container(
+                color: Colors.grey[200],
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("3rd", style: TextStyle(fontSize: 16)),
+                    SizedBox(
+                      width: 20,
+                    ),
+                    Text(
+                      "1st",
+                      style: TextStyle(fontSize: 20),
+                    ),
+                    SizedBox(
+                      width: 20,
+                    ),
+                    Text(
+                      "2nd",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 13,
               child: DefaultTabController(
                 length: 2,
                 child: Scaffold(
@@ -177,7 +201,7 @@ class _LeaderboardState extends State<Leaderboard> {
                           text: 'Leaderboard',
                         ),
                         Tab(
-                          text: 'Statistics',
+                          text: 'Ranking',
                         ),
                       ],
                     ),
@@ -185,7 +209,7 @@ class _LeaderboardState extends State<Leaderboard> {
                   body: TabBarView(
                     children: [
                       FutureBuilder(
-                          future: getData(),
+                          future: _getData(),
                           builder: (_,
                               AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
                             if (snapshot.hasData) {
@@ -216,10 +240,8 @@ class _LeaderboardState extends State<Leaderboard> {
                                               color: Colors.grey[200]),
                                         ),
                                         SizedBox(width: 100),
-                                        // Text("10")
                                       ],
                                     ),
-                                    // subtitle: Text('United States'),
                                   );
                                 },
                               );

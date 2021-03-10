@@ -1,6 +1,7 @@
 import 'package:Quipia/screens/leaderboard.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dart_random_choice/dart_random_choice.dart';
+import 'package:firebase_admob/firebase_admob.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_native_admob/flutter_native_admob.dart';
@@ -25,8 +26,13 @@ class _HomePageState extends State<HomePage> {
   final InAppReview inAppReview = InAppReview.instance;
   int totalPoints;
   final _nativeAdController = NativeAdmobController();
-  String currPointsHome;
+  int currPointsHome;
   FirebaseAuth _auth;
+  MobileAdTargetingInfo targetingInfo = MobileAdTargetingInfo(
+    testDevices: <String>["FC8FD96BEBE58E7A251FC4FE3D077FD5"],
+  );
+  Random random = new Random();
+  int _randomNumber;
 
   RateMyApp rateMyApp = RateMyApp(
     preferencesPrefix: 'rateMyApp_',
@@ -40,11 +46,10 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _nativeAdController.setTestDeviceIds(["FC8FD96BEBE58E7A251FC4FE3D077FD5"]);
+    _randomNumber = random.nextInt(100);
     setState(() {
       _auth = FirebaseAuth.instance;
-      _getPointsDB(_auth).then((val) => setState(() {
-            currPointsHome = val;
-          }));
     });
 
     rateMyApp.init().then(
@@ -100,8 +105,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<String> _getPointsDB(auth) async {
-    String currPoints;
+  Future<int> _getPointsDB(auth) async {
+    int currPoints;
     final String userUID = auth.currentUser.uid;
     await FirebaseFirestore.instance
         .collection('points')
@@ -119,8 +124,11 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     const curveHeight = 70.0;
-    Random random = new Random();
-    int _randomNumber = random.nextInt(100);
+    setState(() {
+      _getPointsDB(_auth).then((val) => setState(() {
+            currPointsHome = val;
+          }));
+    });
 
     return WillPopScope(
       onWillPop: () async {
@@ -197,7 +205,9 @@ class _HomePageState extends State<HomePage> {
                           onPressed: null)),
                   Container(
                     child: Text(
-                      currPointsHome ?? 'loading...',
+                      (currPointsHome == null)
+                          ? 'loading...'
+                          : currPointsHome.toString(),
                       style: TextStyle(
                         fontSize: 18,
                         color: Colors.white,

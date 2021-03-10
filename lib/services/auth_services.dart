@@ -37,12 +37,13 @@ class AuthenticationService {
         password: password,
       );
       if (user != null) {
+        name = name.substring(0, 13);
         await FirebaseAuth.instance.currentUser
             .updateProfile(displayName: name);
         await FirebaseFirestore.instance
             .collection('points')
             .doc(user.user.uid)
-            .set({'name': name, 'points': '0'});
+            .set({'name': name, 'points': 0});
       }
       user.user.sendEmailVerification();
       signout();
@@ -51,55 +52,41 @@ class AuthenticationService {
     }
   }
 
-  Future signInWithFacebook() async {
+  Future<String> signInWithFacebook() async {
+    String name;
     try {
       final result = await facebookLogin.logIn(['email']);
-      switch (result.status) {
-        case FacebookLoginStatus.loggedIn:
-          final token = result.accessToken.token;
-          final graphResponse = await http.get(
-              'https://graph.facebook.com/v2.12/me?fields=name,picture,email&access_token=$token');
-          final profile = JSON.jsonDecode(graphResponse.body);
-          if (profile != null) {
-            UserCredential user =
-                await _firebaseAuth.signInWithEmailAndPassword(
-              email: profile['email'],
-              password: profile['id'],
-            );
-            await _firebaseAuth.currentUser
-                .updateProfile(displayName: profile['name']);
+      if (result.status == FacebookLoginStatus.loggedIn) {
+        final token = result.accessToken.token;
+        final graphResponse = await http.get(
+            'https://graph.facebook.com/v2.12/me?fields=name,picture,email&access_token=$token');
+        final profile = JSON.jsonDecode(graphResponse.body);
+
+        FacebookAccessToken myToken = result.accessToken;
+        AuthCredential credential =
+            FacebookAuthProvider.credential(myToken.token);
+
+        if (profile != null) {
+          UserCredential user =
+              await _firebaseAuth.signInWithCredential(credential);
+          if (user != null) {
+            name = user.user.displayName;
+            await _firebaseAuth.currentUser.updateProfile(displayName: name);
             await FirebaseFirestore.instance
                 .collection('points')
                 .doc(user.user.uid)
-                .set({'name': profile['name'], 'points': '0'});
+                .set({'name': name, 'points': 0});
           }
-          return VerifyScreen();
-          break;
-
-        case FacebookLoginStatus.cancelledByUser:
-          return "Cancelled by User";
-          break;
-        case FacebookLoginStatus.error:
-          return "Login status error!";
-          break;
+        }
       }
-      return "Login Successful";
+      return "Signed in!";
     } catch (e) {
       return e.message;
     }
   }
 
-  // Future<void> _alertVerification(
-  //     BuildContext context, FirebaseAuth firebaseAuth) async {
-  //   await showAlertDialog(
-  //     context: context,
-  //     title: 'Verify Email',
-  //     content: 'You have not yet verified your email!',
-  //     defaultActionText: "Ok",
-  //   );
-  // }
-
   Future<String> signInWithGoogle() async {
+    String name;
     _firebaseAuth.authStateChanges().listen((firebaseUser) {
       if (firebaseUser != null) {
         return FirebaseFirestore.instance
@@ -125,18 +112,26 @@ class AuthenticationService {
           await _firebaseAuth.signInWithCredential(authCredential);
       final User user = authResult.user;
       if (user != null) {
+        name = user.displayName.substring(0, 13);
         await FirebaseAuth.instance.currentUser
-            .updateProfile(displayName: user.displayName);
+            .updateProfile(displayName: name);
         await FirebaseFirestore.instance
             .collection('points')
             .doc(user.uid)
-            .set({'name': user.displayName, 'points': '0'});
+            .set({'name': name, 'points': 0});
       }
-
       return "SignIn Successful";
     } on FirebaseAuthException catch (e) {
       return e.message;
     }
+  }
+
+  void changePassword(String password) {
+    User user = _firebaseAuth.currentUser;
+    EmailAuthCredential credential =
+        EmailAuthProvider.credential(email: user.email, password: password);
+    user.reauthenticateWithCredential(credential);
+    user.updatePassword(password).then((value) {}).catchError((error) {});
   }
 
   String displayName() {

@@ -22,9 +22,9 @@ class _LevelsPageState extends State<LevelsPage> {
   bool unlockedEasy = false;
   bool unlockedMedium = false;
   bool unlockedHard = false;
-  final int thresholdEasy = 200;
-  final int thresholdMedium = 500;
-  final int thresholdHard = 1000;
+  final int thresholdEasy = 500;
+  final int thresholdMedium = 1000;
+  final int thresholdHard = 5000;
   String currPointsLevels;
   int currPointsInt;
 
@@ -40,15 +40,27 @@ class _LevelsPageState extends State<LevelsPage> {
               setState(() {
                 unlockedEasy = true;
               });
+            } else {
+              setState(() {
+                unlockedEasy = false;
+              });
             }
             if (currPointsInt > thresholdMedium) {
               setState(() {
                 unlockedMedium = true;
               });
+            } else {
+              setState(() {
+                unlockedMedium = false;
+              });
             }
             if (currPointsInt > thresholdHard) {
               setState(() {
                 unlockedHard = true;
+              });
+            } else {
+              setState(() {
+                unlockedHard = false;
               });
             }
           }));
@@ -149,7 +161,7 @@ class _LevelsPageState extends State<LevelsPage> {
             SizedBox(height: 5),
             GestureDetector(
               onTap: () {
-                if (unlocked == true) {
+                if (unlockedEasy == true) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -171,7 +183,7 @@ class _LevelsPageState extends State<LevelsPage> {
             SizedBox(height: 5),
             GestureDetector(
               onTap: () {
-                if (unlocked == true) {
+                if (unlockedMedium == true) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -193,7 +205,7 @@ class _LevelsPageState extends State<LevelsPage> {
             SizedBox(height: 5),
             GestureDetector(
               onTap: () {
-                if (unlocked == true) {
+                if (unlockedMedium == true) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -215,7 +227,7 @@ class _LevelsPageState extends State<LevelsPage> {
             SizedBox(height: 5),
             GestureDetector(
               onTap: () {
-                if (unlocked == true) {
+                if (unlockedHard == true) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -237,7 +249,7 @@ class _LevelsPageState extends State<LevelsPage> {
             SizedBox(height: 5),
             GestureDetector(
               onTap: () {
-                if (unlocked == true) {
+                if (unlockedHard == true) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(

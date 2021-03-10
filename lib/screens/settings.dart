@@ -1,12 +1,14 @@
 import 'package:Quipia/controllers/theme_notifier.dart';
 import 'package:Quipia/providers/auth_provider.dart';
+import 'package:Quipia/providers/login_providers.dart';
 import 'package:Quipia/widgets/widgets.dart';
 import 'package:alert_dialogs/alert_dialogs.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:wiredash/wiredash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share/share.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -17,17 +19,44 @@ class _SettingsPageState extends State<SettingsPage> with ChangeNotifier {
   bool collapse = false;
   bool snackBar = false;
   bool isSoundTapped;
-  bool isMusicTapped;
   bool isRecieveUpdates = false;
   bool _dark;
+  final _passwordNewController = TextEditingController();
+  String text =
+      'https://play.google.com/store/apps/details?id=com.example.Quipia';
+  String subject = 'Share the Trivia App!';
 
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
-    isMusicTapped = true;
     isSoundTapped = true;
+  }
+
+  @override
+  void dispose() {
+    _passwordNewController?.dispose();
+    super.dispose();
+  }
+
+  _launchURL(url) async {
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
+  Future<void> _fieldValidate(BuildContext context) async {
+    final bool didRequestSignOut = await showAlertDialog(
+          context: context,
+          title: 'Error!',
+          content: 'Field cannot be empty.',
+          defaultActionText: "Ok",
+        ) ??
+        false;
+    if (didRequestSignOut == true) {}
   }
 
   Future<void> _confirmSignOut(BuildContext context, auth) async {
@@ -44,14 +73,9 @@ class _SettingsPageState extends State<SettingsPage> with ChangeNotifier {
     }
   }
 
-  Widget _passwordChanger(auth, collapse) {
-    final _passwordNewController = TextEditingController();
-    void _changePassword(String password) {
-      User user = auth.currentUser;
-      EmailAuthCredential credential =
-          EmailAuthProvider.credential(email: user.email, password: password);
-      user.reauthenticateWithCredential(credential);
-      user.updatePassword(password).then((value) {}).catchError((error) {});
+  Widget _passwordChanger(context, auth, pass, collapse) {
+    void updatePassword(BuildContext context, String pass) {
+      context.read(passwordProvider).state = pass;
     }
 
     if (collapse == true) {
@@ -84,15 +108,23 @@ class _SettingsPageState extends State<SettingsPage> with ChangeNotifier {
                   obscureText: true,
                   keyboardType: TextInputType.visiblePassword,
                   textInputAction: TextInputAction.done,
+                  onChanged: (text) {
+                    updatePassword(context, text);
+                  },
                 ),
               ),
             ),
             GestureDetector(
               onTap: () {
-                _changePassword(_passwordNewController.text);
+                if (_passwordNewController.text.isEmpty) {
+                  _fieldValidate(context);
+                }
+                auth.changePassword(pass);
                 _passwordNewController.clear();
                 _scaffoldKey.currentState.showSnackBar(
                     new SnackBar(content: new Text("Password changed!")));
+                auth.signout();
+                Navigator.of(context).pop();
               },
               child: Container(
                 margin: const EdgeInsets.all(5.0),
@@ -124,9 +156,11 @@ class _SettingsPageState extends State<SettingsPage> with ChangeNotifier {
 
   @override
   Widget build(BuildContext context) {
-    final appThemeState = context.read(appThemeStateNotifier);
+    double height = MediaQuery.of(context).size.height * 0.12;
     return Consumer(
       builder: (context, watch, child) {
+        final appThemeState = context.read(appThemeStateNotifier);
+        final pass = watch(passwordProvider).state;
         final _auth = watch(authServicesProvider);
         return Scaffold(
           key: _scaffoldKey,
@@ -138,19 +172,18 @@ class _SettingsPageState extends State<SettingsPage> with ChangeNotifier {
             ),
             actions: <Widget>[
               IconButton(
-                icon: Icon(FontAwesomeIcons.moon),
+                icon: Icon(
+                  FontAwesomeIcons.shareAlt,
+                  color: Colors.deepPurple,
+                ),
                 onPressed: () {
-                  setState(() {
-                    if (_dark == false) {
-                      appThemeState.setDarkTheme();
-                      _dark = true;
-                    } else {
-                      appThemeState.setLightTheme();
-                      _dark = false;
-                    }
-                  });
+                  final RenderBox box = context.findRenderObject();
+                  Share.share(text,
+                      subject: subject,
+                      sharePositionOrigin:
+                          box.localToGlobal(Offset.zero) & box.size);
                 },
-              )
+              ),
             ],
           ),
           body: Stack(
@@ -211,24 +244,7 @@ class _SettingsPageState extends State<SettingsPage> with ChangeNotifier {
                               }
                             },
                           ),
-                          _passwordChanger(_auth, collapse),
-                          _buildDivider(),
-                          ListTile(
-                            leading: (isMusicTapped == true)
-                                ? Icon(
-                                    FontAwesomeIcons.music,
-                                    color: Colors.deepPurple,
-                                  )
-                                : Icon(Icons.music_off_outlined,
-                                    color: Colors.deepPurple),
-                            title: Text("Music"),
-                            trailing: Icon(Icons.keyboard_arrow_right),
-                            onTap: () {
-                              setState(() {
-                                isMusicTapped = !isMusicTapped;
-                              });
-                            },
-                          ),
+                          _passwordChanger(context, _auth, pass, collapse),
                           _buildDivider(),
                           ListTile(
                             leading: (isSoundTapped == true)
@@ -245,6 +261,26 @@ class _SettingsPageState extends State<SettingsPage> with ChangeNotifier {
                             onTap: () {
                               setState(() {
                                 isSoundTapped = !isSoundTapped;
+                              });
+                            },
+                          ),
+                          _buildDivider(),
+                          ListTile(
+                            leading: Icon(
+                              FontAwesomeIcons.moon,
+                              color: Colors.deepPurple,
+                            ),
+                            title: Text("Dark mode"),
+                            trailing: Icon(Icons.keyboard_arrow_right),
+                            onTap: () {
+                              setState(() {
+                                if (_dark == false) {
+                                  appThemeState.setDarkTheme();
+                                  _dark = true;
+                                } else {
+                                  appThemeState.setLightTheme();
+                                  _dark = false;
+                                }
                               });
                             },
                           ),
@@ -277,25 +313,32 @@ class _SettingsPageState extends State<SettingsPage> with ChangeNotifier {
                     ),
                     const SizedBox(height: 20.0),
                     Text(
-                      "Notification Settings",
+                      "About",
                       style: TextStyle(
                         fontSize: 20.0,
                         fontWeight: FontWeight.bold,
                         color: Colors.deepPurple,
                       ),
                     ),
-                    SwitchListTile(
-                      activeColor: Colors.purple,
-                      contentPadding: const EdgeInsets.all(0),
-                      value: isRecieveUpdates,
-                      title: Text("Received App  Updates"),
-                      onChanged: (val) {
-                        setState(() {
-                          isRecieveUpdates = val;
-                        });
+                    const SizedBox(height: 20.0),
+                    _buildDivider(),
+                    ListTile(
+                      title: Text("Rate Us"),
+                      subtitle: Text("We would appreciate your feedback!"),
+                      leading: Icon(
+                        Icons.star,
+                        color: Colors.deepPurple,
+                      ),
+                      onTap: () async {
+                        _launchURL(text);
                       },
                     ),
-                    const SizedBox(height: 60.0),
+                    _buildDivider(),
+                    SizedBox(height: height),
+                    ListTile(
+                      title: Text("Version"),
+                      subtitle: Text("Version 1.0. Made with love in 2021."),
+                    ),
                   ],
                 ),
               ),

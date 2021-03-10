@@ -45,6 +45,8 @@ dependencies:
   meta: 
   provider:
   rate_my_app:
+  share:
+  url_launcher:
   websafe_svg:
   wiredash:
 

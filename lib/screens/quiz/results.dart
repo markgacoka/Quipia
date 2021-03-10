@@ -1,11 +1,11 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:Quipia/controllers/quiz/quiz_state.dart';
 import 'package:Quipia/models/question_model.dart';
 import 'package:Quipia/controllers/quiz/quiz_controller.dart';
 import 'package:Quipia/repositories/quiz/quiz_repository.dart';
 import 'package:Quipia/widgets/widgets.dart';
-import 'package:confetti/confetti.dart';
 import 'package:Quipia/screens/screens.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:firebase_admob/firebase_admob.dart';
@@ -26,9 +26,11 @@ class QuizResults extends StatefulWidget {
 }
 
 class _QuizResultsState extends State<QuizResults> {
-  ConfettiController _controllerCenter;
+  ConfettiController _controller;
   int points;
-  static const MobileAdTargetingInfo targetingInfo = MobileAdTargetingInfo();
+  static const MobileAdTargetingInfo targetingInfo = MobileAdTargetingInfo(
+    testDevices: <String>["FC8FD96BEBE58E7A251FC4FE3D077FD5"],
+  );
   final CollectionReference collectionReference =
       FirebaseFirestore.instance.collection('points');
   final String userUID = FirebaseAuth.instance.currentUser.uid;
@@ -39,10 +41,16 @@ class _QuizResultsState extends State<QuizResults> {
       "https://assets.mixkit.co/sfx/preview/mixkit-bonus-earned-in-video-game-2058.mp3";
   String endLevelUrl =
       "https://assets.mixkit.co/sfx/preview/mixkit-extra-bonus-in-a-video-game-2045.mp3";
+  int _pointsForConfetti;
 
   @override
   void initState() {
     super.initState();
+    setState(() {
+      _controller = new ConfettiController(
+        duration: new Duration(seconds: 10),
+      );
+    });
     FirebaseAdMob.instance
         .initialize(appId: 'ca-app-pub-8323754226268458~7511554081');
     _interstitialAd = createInterstitialAd()..load();
@@ -69,23 +77,23 @@ class _QuizResultsState extends State<QuizResults> {
   }
 
   Future _addData(int points) async {
-    Future<String> currPoints = _getPointsDB();
+    Future<int> currPoints = _getPointsDB();
     return await collectionReference.doc(userUID).set({
       'name': _auth.currentUser.displayName,
-      "points": (points + int.parse(await currPoints)).toString(),
+      "points": (points + await currPoints),
     });
   }
 
   Future _addReward(int reward) async {
-    Future<String> currPointsReward = _getPointsDB();
+    Future<int> currPointsReward = _getPointsDB();
     return await collectionReference.doc(userUID).set({
       'name': _auth.currentUser.displayName,
-      "points": (reward + int.parse(await currPointsReward)).toString(),
+      "points": (reward + await currPointsReward),
     });
   }
 
-  Future<String> _getPointsDB() async {
-    String currPoints;
+  Future<int> _getPointsDB() async {
+    int currPoints;
     await FirebaseFirestore.instance
         .collection('points')
         .where(FieldPath.documentId, isEqualTo: userUID)
@@ -104,6 +112,12 @@ class _QuizResultsState extends State<QuizResults> {
     points = widget.state.correct.length * 10;
     const curveHeight = 20.0;
     _addData(points);
+    setState(() {
+      _pointsForConfetti = widget.state.correct.length;
+      if (_pointsForConfetti > 4) {
+        _controller.play();
+      }
+    });
 
     return ProviderScope(
       child: Container(
@@ -111,7 +125,7 @@ class _QuizResultsState extends State<QuizResults> {
           image: DecorationImage(
             fit: BoxFit.cover,
             colorFilter: new ColorFilter.mode(
-                Colors.black.withOpacity(0.6), BlendMode.dstATop),
+                Colors.black.withOpacity(0.7), BlendMode.dstOver),
             image: AssetImage(
               'assets/images/thumbnails/background_results.jpg',
             ),
@@ -177,24 +191,22 @@ class _QuizResultsState extends State<QuizResults> {
                 SizedBox(width: 20),
               ],
             ),
-            (widget.state.correct.length > 5)
-                ? ConfettiWidget(
-                    confettiController: _controllerCenter,
-                    blastDirectionality: BlastDirectionality.explosive,
-                    particleDrag: 0.05,
-                    emissionFrequency: 0.05,
-                    numberOfParticles: 20,
-                    gravity: 0.05,
-                    shouldLoop: false,
-                    colors: const [
-                      Colors.green,
-                      Colors.blue,
-                      Colors.pink,
-                      Colors.orange,
-                      Colors.purple
-                    ],
-                  )
-                : SizedBox.shrink(),
+            ConfettiWidget(
+              confettiController: _controller,
+              blastDirectionality: BlastDirectionality.explosive,
+              particleDrag: 0.05,
+              emissionFrequency: 0.05,
+              numberOfParticles: 30,
+              gravity: 0.10,
+              shouldLoop: false,
+              colors: const [
+                Colors.green,
+                Colors.blue,
+                Colors.pink,
+                Colors.orange,
+                Colors.purple
+              ],
+            ),
             Padding(
               padding: const EdgeInsets.only(top: 50.0),
               child: Text(
@@ -274,7 +286,7 @@ class _QuizResultsState extends State<QuizResults> {
 
   @override
   void dispose() {
-    _controllerCenter?.dispose();
+    _controller?.dispose();
     _interstitialAd?.dispose();
     super.dispose();
   }

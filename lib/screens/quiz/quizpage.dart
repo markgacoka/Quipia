@@ -55,7 +55,7 @@ class QuizPage extends HookWidget {
                     );
                   }
                 },
-                color: Colors.yellow[700],
+                color: Theme.of(context).buttonColor,
                 color2: Colors.black);
           },
           orElse: () => const SizedBox.shrink(),

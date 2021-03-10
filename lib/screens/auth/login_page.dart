@@ -20,6 +20,7 @@ class _LoginscreenState extends State<Loginscreen> {
   final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
   final _emailText = TextEditingController();
   final _passwordText = TextEditingController();
+  String message;
 
   @override
   void dispose() {
@@ -256,8 +257,14 @@ class _LoginscreenState extends State<Loginscreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
                           GestureDetector(
-                            onTap: () {
-                              _auth.signInWithFacebook();
+                            onTap: () async {
+                              message = await _auth.signInWithFacebook();
+                              await showAlertDialog(
+                                context: context,
+                                title: 'Important!',
+                                content: message,
+                                defaultActionText: "Ok",
+                              );
                             },
                             child: FaIcon(
                               FontAwesomeIcons.facebook,
